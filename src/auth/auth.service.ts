@@ -10,7 +10,7 @@ import { Request, Response } from 'express';
 export class AuthService {
   constructor(private prisma: PrismaService, private jwt: JwtService) {}
 
-  async signup(dto: AuthDto) {
+  async signup(dto: AuthDto, res: Response) {
     const { email, password } = dto;
 
     const userExists = await this.prisma.user.findUnique({
@@ -30,7 +30,20 @@ export class AuthService {
       },
     });
 
-    return { message: 'User created succefully' };
+    const foundUsers = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    const token = await this.signToken({
+      userId: foundUsers.id,
+      email: foundUsers.email,
+    });
+    res.cookie('token', token, {});
+    res.send(token);
+
+    //return { message: 'User created succefully' };
   }
 
   async signin(dto: AuthDto, req: Request, res: Response) {
@@ -65,6 +78,8 @@ export class AuthService {
     }
 
     res.cookie('token', token, {});
+
+    // use res.send to send the token and refresh token
 
     return res.send({ message: 'Logged in succefully' });
   }
