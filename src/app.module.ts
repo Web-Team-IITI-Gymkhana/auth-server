@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { ConfigModule } from '@nestjs/config';
 
 import { AppController } from './controller/AppController';
@@ -13,4 +14,5 @@ import { UserModule } from './users/user.module';
   controllers: [AppController],
   providers: [Logger, TransactionInterceptor],
 })
-export class AppModule {}
+
+export class AppModule { }

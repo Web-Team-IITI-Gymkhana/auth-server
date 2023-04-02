@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import * as repl from 'repl';
-import * as Logger from 'purdy';
+import Logger from 'purdy';
 
 const LOGGER_OPTIONS = {
   indent: 2,
