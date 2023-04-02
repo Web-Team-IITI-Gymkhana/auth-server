@@ -9,7 +9,7 @@ export class LoggerInterceptor implements NestInterceptor {
 
   public intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req: Request = context.switchToHttp().getRequest();
-    const userName = req['user'] ? req['user'].userName : 'anonymous';
+    const userName = req['user'] ? req['user'] : 'anonymous';
     const { statusCode } = context.switchToHttp().getResponse();
     const { method, url, ip } = req;
     const startTime = new Date().getTime();
