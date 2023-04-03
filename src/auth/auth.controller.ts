@@ -1,5 +1,15 @@
 import { AuthDto } from './dto/auth.dto';
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Get,
+  UseGuards,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { GetCurrentUserId, GetCurrentUser } from '../common/decorators';
 import { AtGuard, RtGuard } from '../common/guards';
 import { AuthService } from './auth.service';
@@ -21,7 +31,7 @@ export class AuthController {
     return this.authService.signin(dto);
   }
   @UseGuards(AtGuard)
-  @Post('logout')
+  @Get('logout')
   @HttpCode(HttpStatus.OK)
   signout(@GetCurrentUserId() userId: string): Promise<boolean> {
     return this.authService.signout(userId);
@@ -34,5 +44,21 @@ export class AuthController {
     @GetCurrentUser('refreshToken') refreshToken: string,
   ): Promise<Tokens> {
     return this.authService.refreshTokens(userId, refreshToken);
+  }
+
+  @Get('verify')
+  async getProtectedResource(@Headers('authorization') authHeader: string): Promise<any> {
+    try {
+      const token = authHeader.split(' ')[1];
+      const { expired, payload } = await this.authService.verifyAccessToken(token);
+      if (expired) {
+        throw new UnauthorizedException(`Access token has expired`);
+      }
+      // Perform additional checks on the payload
+      // ...
+      return 'You have access to the protected resource';
+    } catch (err) {
+      throw new UnauthorizedException('Invalid access token');
+    }
   }
 }

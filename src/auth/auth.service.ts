@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { jwtSecret } from 'src/utils/constants';
 import { Request, Response } from 'express';
 import { JwtPayload, Tokens } from './types';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -99,6 +100,23 @@ export class AuthService {
       },
     });
     return true;
+  }
+
+  async verifyAccessToken(token: string): Promise<{ expired: boolean; payload: any }> {
+    return new Promise((resolve, reject) => {
+      jwt.verify(token, 'at-secret', (err, decoded) => {
+        if (err) {
+          if (err.name === 'TokenExpiredError') {
+            //const timeRemaining = Math.floor((err.expiredAt.getTime() - Date.now()) / 1000);
+            resolve({ expired: true, payload: null });
+          } else {
+            reject(err);
+          }
+        } else {
+          resolve({ expired: false, payload: decoded });
+        }
+      });
+    });
   }
 
   async refreshTokens(userId: string, rt: string): Promise<Tokens> {
