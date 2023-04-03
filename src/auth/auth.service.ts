@@ -11,7 +11,7 @@ export class AuthService {
   constructor(private prisma: PrismaService, private jwt: JwtService) {}
 
   async signup(dto: AuthDto, res: Response) {
-    const { email, password } = dto;
+    const { email, password, isVerified, authType, hashedRT } = dto;
 
     const userExists = await this.prisma.user.findUnique({
       where: { email },
@@ -25,8 +25,11 @@ export class AuthService {
 
     await this.prisma.user.create({
       data: {
-        email,
         hashedPassword,
+        email,
+        authType: 'GOOGLE',
+        isVerified,
+        hashedRT,
       },
     });
 

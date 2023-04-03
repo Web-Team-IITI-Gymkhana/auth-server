@@ -3,31 +3,27 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id             String   @id @unique @default(uuid())
-  email          String   @unique
+  id             String    @id @unique @default(uuid())
+  email          String    @unique
   hashedPassword String
-  authType       authtype?
-  createdAt      DateTime @default(now())
-  updateAt       DateTime @updatedAt()
+  authType       String
+  createdAt      DateTime  @default(now())
+  updateAt       DateTime  @updatedAt()
   isVerified     Boolean?
   hashedRT       String?
+  Fid            Profile[] @relation("userToProfile")
 }
 
 model Profile {
-  id       String @id @unique @default(uuid())
-  Name     String @db.VarChar(255)
-  imageURL String?
-  Metadata Json?
-  relid    String?
-}
-
-enum authtype {
-  GOOGLE
-  PASSWORD
+  id        String  @id @unique @default(uuid())
+  Name      String  @db.VarChar(255)
+  imageURL  String?
+  Metadata  Json?
+  profileId String
+  profile   User    @relation("userToProfile", fields: [profileId], references: [id])
 }
