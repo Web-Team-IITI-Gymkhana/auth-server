@@ -3,15 +3,12 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { AtStrategy, RtStrategy } from './strategies';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [
-    JwtModule,
-    PassportModule,
-    PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({ secretOrPrivateKey: process.env.JWT_SECRET }),
-  ],
+  imports: [JwtModule, PassportModule, PassportModule.register({}), JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, AtStrategy, RtStrategy, ConfigService],
 })
 export class AuthModule {}

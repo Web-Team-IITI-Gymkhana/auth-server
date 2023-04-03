@@ -1,17 +1,21 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+
 import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { jwtSecret } from 'src/utils/constants';
 import { Request, Response } from 'express';
+import { JwtPayload, Tokens } from './types';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwt: JwtService) {}
+  constructor(private prisma: PrismaService, private jwtService: JwtService, private config: ConfigService) {}
 
-  async signup(dto: AuthDto, res: Response) {
-    const { email, password, isVerified, authType, hashedRT } = dto;
+  async signup(dto: AuthDto): Promise<Tokens> {
+    const { email, password, authType } = dto;
 
     const userExists = await this.prisma.user.findUnique({
       where: { email },
@@ -23,33 +27,38 @@ export class AuthService {
 
     const hashedPassword = await this.hashPassword(password);
 
-    await this.prisma.user.create({
-      data: {
-        hashedPassword,
-        email,
-        authType: 'GOOGLE',
-        isVerified,
-        hashedRT,
-      },
-    });
+    await this.prisma.user
+      .create({
+        data: {
+          hashedPassword,
+          email,
+          authType: 'PASSWORD',
+        },
+      })
+      .catch((error) => {
+        if (error instanceof PrismaClientKnownRequestError) {
+          if (error.code === 'P2002') {
+            throw new ForbiddenException('Credentials incorrect');
+          }
+        }
+        throw error;
+      });
 
-    const foundUsers = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: {
         email,
       },
     });
 
-    const token = await this.signToken({
-      userId: foundUsers.id,
-      email: foundUsers.email,
-    });
-    res.cookie('token', token, {});
-    res.send(token);
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRtHash(user.id, tokens.refresh_token);
+
+    return tokens;
 
     //return { message: 'User created succefully' };
   }
 
-  async signin(dto: AuthDto, req: Request, res: Response) {
+  async signin(dto: AuthDto): Promise<Tokens> {
     const { email, password } = dto;
 
     const foundUser = await this.prisma.user.findUnique({
@@ -71,26 +80,81 @@ export class AuthService {
       throw new BadRequestException('Wrong credentials');
     }
 
-    const token = await this.signToken({
-      userId: foundUser.id,
-      email: foundUser.email,
-    });
+    const tokens = await this.getTokens(foundUser.id, foundUser.email);
+    await this.updateRtHash(foundUser.id, tokens.refresh_token);
 
-    if (!token) {
-      throw new ForbiddenException('Could not signin');
-    }
-
-    res.cookie('token', token, {});
-
-    // use res.send to send the token and refresh token
-
-    return res.send({ message: 'Logged in succefully' });
+    return tokens;
   }
 
-  async signout(req: Request, res: Response) {
-    res.clearCookie('token');
+  async signout(userId: string): Promise<boolean> {
+    await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        hashedRT: {
+          not: null,
+        },
+      },
+      data: {
+        hashedRT: null,
+      },
+    });
+    return true;
+  }
 
-    return res.send({ message: 'Logged out succefully' });
+  async refreshTokens(userId: string, rt: string): Promise<Tokens> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user || !user.hashedRT) {
+      throw new ForbiddenException('Access Denied');
+    }
+
+    const rtMatches = await this.comparePasswords({ password: rt, hash: user.hashedRT });
+    if (!rtMatches) {
+      throw new ForbiddenException('Access Denied');
+    }
+
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRtHash(user.id, tokens.refresh_token);
+
+    return tokens;
+  }
+
+  async updateRtHash(userId: string, rt: string): Promise<void> {
+    const hash = await this.hashPassword(rt);
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        hashedRT: hash,
+      },
+    });
+  }
+
+  async getTokens(userId: string, email: string): Promise<Tokens> {
+    const jwtPayload: JwtPayload = {
+      sub: userId,
+      email: email,
+    };
+
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(jwtPayload, {
+        secret: this.config.get<string>('AT_SECRET'),
+        expiresIn: '15m',
+      }),
+      this.jwtService.signAsync(jwtPayload, {
+        secret: this.config.get<string>('RT_SECRET'),
+        expiresIn: '7d',
+      }),
+    ]);
+
+    return {
+      access_token: at,
+      refresh_token: rt,
+    };
   }
 
   async hashPassword(password: string) {
@@ -109,7 +173,7 @@ export class AuthService {
       email: args.email,
     };
 
-    const token = await this.jwt.signAsync(payload, {
+    const token = await this.jwtService.signAsync(payload, {
       secret: jwtSecret,
     });
 

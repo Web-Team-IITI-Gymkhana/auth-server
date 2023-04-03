@@ -5,9 +5,10 @@ import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { CreateUserDto } from './user.dtos';
 import { USER_SERVICE } from 'src/constants';
 import { Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/jwt.guard';
+
 import { UserService } from './user.service';
 import { log } from 'console';
+import { AtGuard } from 'src/common/guards';
 
 @Controller('users')
 export class UserController {
@@ -33,7 +34,7 @@ export class UserController {
   //   return this.usersService.remove(id);
   // }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AtGuard)
   @Get('me/:id')
   getMyUser(@Param() params: { id: string }, @Req() req) {
     console.log(params.id);

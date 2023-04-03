@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEmail, Length, IsBoolean, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsString, IsEmail, Length, IsBoolean, IsEnum, IsOptional } from 'class-validator';
 
 export class AuthDto {
   @IsNotEmpty()
@@ -12,11 +12,14 @@ export class AuthDto {
   public password: string;
 
   @IsString()
+  @IsOptional()
   public hashedRT: string;
 
-  @IsEnum(['GOOGLE', 'PASSWORD'])
-  public authType: [string];
+  @IsString()
+  @IsOptional()
+  public authType: string;
 
   @IsBoolean()
+  @IsOptional()
   public isVerified: boolean;
 }
