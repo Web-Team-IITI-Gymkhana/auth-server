@@ -9,12 +9,14 @@ import {
   Get,
   UseGuards,
   UnauthorizedException,
+  Res,
+  Req,
 } from '@nestjs/common';
 import { GetCurrentUserId, GetCurrentUser } from '../common/decorators';
 import { AtGuard, RtGuard } from '../common/guards';
 import { AuthService } from './auth.service';
 import { Tokens } from './types';
-
+import { AuthGuard } from '@nestjs/passport';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -60,5 +62,21 @@ export class AuthController {
     } catch (err) {
       throw new UnauthorizedException('Invalid access token');
     }
+  }
+
+  @Get('login/google')
+  async getGoogleOAuthUrl(@Req() req) {
+    const redirectUrl = await this.authService.getGoogleOAuthUrl();
+
+    return { url: redirectUrl };
+  }
+
+  @Get('login/google/callback')
+  @UseGuards(AuthGuard('google'))
+  async loginWithGoogleCallback(@Req() req, @Res() res): Promise<void> {
+    const user = req.body;
+    const jwt = await this.authService.signin(user);
+
+    res.send(jwt);
   }
 }

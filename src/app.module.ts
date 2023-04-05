@@ -11,11 +11,14 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from '../prisma/prisma.module';
 // import { UsersModule } from './users/';
 import { UserModule } from './users/user.module';
-
+import { PassportModule } from '@nestjs/passport';
+import { GoogleStrategy } from './google.strategy';
+import { AuthService } from './auth/auth.service';
+import { JwtService } from '@nestjs/jwt';
 @Module({
-  imports: [ConfigModule.forRoot(), DatabaseModule,AuthModule,PrismaModule, UserModule],
+  imports: [ConfigModule.forRoot(), DatabaseModule,AuthModule,PrismaModule, UserModule,PassportModule,],
   controllers: [AppController],
-  providers: [Logger, TransactionInterceptor],
+  providers: [Logger, TransactionInterceptor,GoogleStrategy,AuthService,JwtService],
 })
 
 export class AppModule { }
