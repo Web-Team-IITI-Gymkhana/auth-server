@@ -12,10 +12,12 @@ import { JwtPayload, Tokens } from './types';
 import * as jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { log } from 'console';
+import { url } from 'inspector';
 
 @Injectable()
 export class AuthService {
   private readonly googleOAuth2Client: OAuth2Client;
+  configService: any;
 
   constructor(private config: ConfigService, private prisma: PrismaService, private jwtService: JwtService) {
     this.googleOAuth2Client = new OAuth2Client({
@@ -208,16 +210,27 @@ export class AuthService {
     return token;
   }
 
-  async getGoogleOAuthUrl(): Promise<string> {
+  async getGoogleOAuthUrl(curl: any): Promise<string> {
     const authorizeUrl = this.googleOAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: ['profile', 'email'],
-      state: 
+      state: curl,
     });
     return authorizeUrl;
   }
 
-  async validateGoogleOAuthLogin(profile: any): Promise<any> {
-    console.log('gauth happening');
+  async validateGoogleOAuthLogin(code: string): Promise<any> {
+    // const clientId = '603233410519-7l5m743sbl56ntteagmsortt1f32i2q7.apps.googleusercontent.com';
+    // const clientSecret = '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';
+    // const redirectUri = `http://localhost:3000/v1/auth/login/google/callback`;
+    // const client = new OAuth2Client(clientId, clientSecret, redirectUri);
+    console.log(code);
+    // const { tokens } = await client.getToken(code);
+    // // console.log(tokens);
+    // client.setCredentials(tokens);
+
+    // const { data } = await client.request({ url: 'https://www.googleapis.com/oauth2/v3/userinfo' });
+    // console.log('hello' + data);
+    return code;
   }
 }

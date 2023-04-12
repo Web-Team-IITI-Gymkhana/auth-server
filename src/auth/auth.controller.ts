@@ -11,12 +11,15 @@ import {
   UnauthorizedException,
   Res,
   Req,
+  Query,
 } from '@nestjs/common';
 import { GetCurrentUserId, GetCurrentUser } from '../common/decorators';
 import { AtGuard, RtGuard } from '../common/guards';
 import { AuthService } from './auth.service';
 import { Tokens } from './types';
 import { AuthGuard } from '@nestjs/passport';
+import { log } from 'console';
+import { query } from 'express';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -64,19 +67,22 @@ export class AuthController {
     }
   }
 
-  @Get('login/google')
+  @Post('login/google')
   async getGoogleOAuthUrl(@Req() req) {
-    const redirectUrl = await this.authService.getGoogleOAuthUrl();
+    console.log('hello');
 
-    return { url: redirectUrl };
+    const curl = req.body.curl;
+    const redirectUrl = await this.authService.getGoogleOAuthUrl(curl);
+
+    return { url: redirectUrl, curl };
   }
 
   @Get('login/google/callback')
   @UseGuards(AuthGuard('google'))
   async loginWithGoogleCallback(@Req() req, @Res() res): Promise<void> {
-    const user = req.body;
-    const jwt = await this.authService.signin(user);
-
-    res.send(jwt);
+    const jwt = await this.authService.validateGoogleOAuthLogin(req.query.code);
+    // console.log(req.query);
+    res.redirect(`http://localhost:3001/success?token=${jwt}`);
+    // res.send({ message: 'success' });
   }
 }

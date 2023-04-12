@@ -17,8 +17,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  async validate(accessToken: string, refreshToken: string, profile: any, done: Function) {
-    const user = await this.authService.validateGoogleOAuthLogin(profile);
-    done(null, user);
+  async validate(accessToken: string, refreshToken: string, code: string) {
+    console.log(code);
+    const user = await this.authService.validateGoogleOAuthLogin(code);
+    console.log(accessToken);
+    console.log(refreshToken);
+    return user;
   }
 }
