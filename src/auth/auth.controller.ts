@@ -1,4 +1,6 @@
 import { AuthDto } from './dto/auth.dto';
+import { randomUUID } from 'crypto';
+import { USER_SERVICE } from 'src/constants';
 import {
   Body,
   Controller,
@@ -38,14 +40,14 @@ export class AuthController {
   @UseGuards(AtGuard)
   @Get('logout')
   @HttpCode(HttpStatus.OK)
-  signout(@GetCurrentUserId() userId: string): Promise<boolean> {
+  signout(@GetCurrentUserId() userId: typeof randomUUID): Promise<boolean> {
     return this.authService.signout(userId);
   }
   @UseGuards(RtGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   refreshTokens(
-    @GetCurrentUserId() userId: string,
+    @GetCurrentUserId() userId: typeof randomUUID,
     @GetCurrentUser('refreshToken') refreshToken: string,
   ): Promise<Tokens> {
     return this.authService.refreshTokens(userId, refreshToken);

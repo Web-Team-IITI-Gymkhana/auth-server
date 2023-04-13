@@ -1,25 +1,32 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
+//import { PrismaService } from 'prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+//import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 
 import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { jwtSecret } from 'src/utils/constants';
-import { Request, Response } from 'express';
 import { JwtPayload, Tokens } from './types';
 import * as jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import { UserModel } from 'src/db/models';
+import { USER_DAO } from 'src/constants';
+import { randomUUID } from 'crypto';
+import { NotNull } from 'sequelize-typescript';
 import { log } from 'console';
-import { url } from 'inspector';
 
 @Injectable()
 export class AuthService {
   private readonly googleOAuth2Client: OAuth2Client;
   configService: any;
 
-  constructor(private config: ConfigService, private prisma: PrismaService, private jwtService: JwtService) {
+  constructor(
+    private config: ConfigService,
+    @Inject(USER_DAO)
+    private readonly userModel: typeof UserModel,
+    private jwtService: JwtService,
+  ) {
     this.googleOAuth2Client = new OAuth2Client({
       clientId: '603233410519-7l5m743sbl56ntteagmsortt1f32i2q7.apps.googleusercontent.com',
       clientSecret: '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',
@@ -30,7 +37,7 @@ export class AuthService {
   async signup(dto: AuthDto): Promise<Tokens> {
     const { email, password, authType } = dto;
 
-    const userExists = await this.prisma.user.findUnique({
+    const userExists = await this.userModel.findOne({
       where: { email },
     });
 
@@ -40,31 +47,27 @@ export class AuthService {
 
     const hashedPassword = await this.hashPassword(password);
 
-    await this.prisma.user
+    await this.userModel
       .create({
-        data: {
-          hashedPassword,
-          email,
-          authType: 'PASSWORD',
-        },
+        hashedPassword,
+        email,
+        authType: 'PASSWORD',
       })
       .catch((error) => {
-        if (error instanceof PrismaClientKnownRequestError) {
-          if (error.code === 'P2002') {
-            throw new ForbiddenException('Credentials incorrect');
-          }
+        if (error.name === 'SequelizeUniqueConstraintError') {
+          throw new ForbiddenException('Credentials incorrect');
         }
         throw error;
       });
 
-    const user = await this.prisma.user.findUnique({
+    const user = await this.userModel.findOne({
       where: {
         email,
       },
     });
 
-    const tokens = await this.getTokens(user.id, user.email);
-    await this.updateRtHash(user.id, tokens.refresh_token);
+    const tokens = await this.getTokens(user.UserId, user.email);
+    await this.updateRtHash(user.UserId, tokens.refresh_token);
 
     return tokens;
 
@@ -74,7 +77,7 @@ export class AuthService {
   async signin(dto: AuthDto): Promise<Tokens> {
     const { email, password } = dto;
 
-    const foundUser = await this.prisma.user.findUnique({
+    const foundUser = await this.userModel.findOne({
       where: {
         email,
       },
@@ -93,24 +96,29 @@ export class AuthService {
       throw new BadRequestException('Wrong credentials');
     }
 
-    const tokens = await this.getTokens(foundUser.id, foundUser.email);
-    await this.updateRtHash(foundUser.id, tokens.refresh_token);
+    const tokens = await this.getTokens(foundUser.UserId, foundUser.email);
+    await this.updateRtHash(foundUser.UserId, tokens.refresh_token);
 
     return tokens;
   }
 
-  async signout(userId: string): Promise<boolean> {
-    await this.prisma.user.updateMany({
-      where: {
-        id: userId,
-        hashedRT: {
-          not: null,
+  async signout(userId: typeof randomUUID): Promise<boolean> {
+    const data = {
+      hashedRT: null,
+    };
+    await this.userModel
+      .update(data, {
+        where: {
+          UserId: userId,
+          // hashedRT: NotNull,
         },
-      },
-      data: {
-        hashedRT: null,
-      },
-    });
+      })
+      .then((result) => {
+        console.log(result);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
     return true;
   }
 
@@ -131,10 +139,10 @@ export class AuthService {
     });
   }
 
-  async refreshTokens(userId: string, rt: string): Promise<Tokens> {
-    const user = await this.prisma.user.findUnique({
+  async refreshTokens(userId: typeof randomUUID, rt: string): Promise<Tokens> {
+    const user = await this.userModel.findOne({
       where: {
-        id: userId,
+        UserId: userId,
       },
     });
     if (!user || !user.hashedRT) {
@@ -146,25 +154,27 @@ export class AuthService {
       throw new ForbiddenException('Access Denied');
     }
 
-    const tokens = await this.getTokens(user.id, user.email);
-    await this.updateRtHash(user.id, tokens.refresh_token);
+    const tokens = await this.getTokens(user.UserId, user.email);
+    await this.updateRtHash(user.UserId, tokens.refresh_token);
 
     return tokens;
   }
 
-  async updateRtHash(userId: string, rt: string): Promise<void> {
+  async updateRtHash(userId: typeof randomUUID, rt: string): Promise<void> {
     const hash = await this.hashPassword(rt);
-    await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
+    await this.userModel.update(
+      {
         hashedRT: hash,
       },
-    });
+      {
+        where: {
+          UserId: userId,
+        },
+      },
+    );
   }
 
-  async getTokens(userId: string, email: string): Promise<Tokens> {
+  async getTokens(userId: typeof randomUUID, email: string): Promise<Tokens> {
     const jwtPayload: JwtPayload = {
       sub: userId,
       email: email,
@@ -173,11 +183,11 @@ export class AuthService {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {
         secret: this.config.get<string>('AT_SECRET'),
-        expiresIn: '15m',
+        expiresIn: '7d',
       }),
       this.jwtService.signAsync(jwtPayload, {
         secret: this.config.get<string>('RT_SECRET'),
-        expiresIn: '7d',
+        expiresIn: '346d',
       }),
     ]);
 
@@ -197,9 +207,9 @@ export class AuthService {
     return await bcrypt.compare(args.password, args.hash);
   }
 
-  async signToken(args: { userId: string; email: string }) {
+  async signToken(args: { userId: typeof randomUUID; email: string }) {
     const payload = {
-      id: args.userId,
+      UserId: args.userId,
       email: args.email,
     };
 

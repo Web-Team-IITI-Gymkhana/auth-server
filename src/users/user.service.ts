@@ -1,65 +1,65 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { User } from './user.entity';
-import { UserModel } from 'src/db/models';
-import { USER_DAO } from 'src/constants';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { Request } from 'express';
-import { PrismaService } from 'prisma/prisma.service';
+// import { Inject, Injectable } from '@nestjs/common';
 
-@Injectable()
-export class UserService {
-  constructor(
-    @Inject(USER_DAO)
-    private readonly userModel: typeof UserModel,
-    private prisma: PrismaService,
-  ) {}
+// import { UserModel } from 'src/db/models';
+// import { USER_DAO } from 'src/constants';
+// import { ForbiddenException, NotFoundException } from '@nestjs/common';
+// import { Request } from 'express';
+// import { PrismaService } from 'prisma/prisma.service';
 
-  create(createUserDto: User): Promise<User> {
-    return this.userModel.create({
-      firstName: createUserDto.firstName,
-      lastName: createUserDto.lastName,
-    });
-  }
+// @Injectable()
+// export class UserService {
+//   constructor(
+//     @Inject(USER_DAO)
+//     private readonly userModel: typeof UserModel,
+//     private prisma: PrismaService,
+//   ) {}
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.findAll();
-  }
+//   create(createUserDto: User): Promise<User> {
+//     // return this.userModel.create({
+//     //   firstName: createUserDto.firstName,
+//     //   lastName: createUserDto.lastName,
+//     // });
+//   }
 
-  findOne(id: string): Promise<User> {
-    return this.userModel.findOne({
-      where: {
-        id,
-      },
-    });
-  }
+//   async findAll(): Promise<User[]> {
+//     return this.userModel.findAll();
+//   }
 
-  async remove(id: string): Promise<void> {
-    await this.userModel.destroy({ where: { id: id } });
-  }
+//   findOne(id: string): Promise<User> {
+//     return this.userModel.findOne({
+//       where: {
+//         id,
+//       },
+//     });
+//   }
 
-  async getMyUser(id: string, req: Request) {
-    const decodedUserInfo = req['user'] as { id: string; email: string };
+//   async remove(id: string): Promise<void> {
+//     await this.userModel.destroy({ where: { id: id } });
+//   }
 
-    const foundUser = await this.prisma.user.findUnique({ where: { id } });
+//   async getMyUser(id: string, req: Request) {
+//     const decodedUserInfo = req['user'] as { id: string; email: string };
 
-    if (!foundUser) {
-      throw new NotFoundException();
-    }
+//     const foundUser = await this.prisma.user.findUnique({ where: { id } });
 
-    if (foundUser.id !== decodedUserInfo.id) {
-      throw new ForbiddenException();
-    }
+//     if (!foundUser) {
+//       throw new NotFoundException();
+//     }
 
-    delete foundUser.hashedPassword;
+//     if (foundUser.id !== decodedUserInfo.id) {
+//       throw new ForbiddenException();
+//     }
 
-    return { user: foundUser };
-  }
+//     delete foundUser.hashedPassword;
 
-  async getUsers() {
-    const users = await this.prisma.user.findMany({
-      select: { id: true, email: true },
-    });
+//     return { user: foundUser };
+//   }
 
-    return { users };
-  }
-}
+//   async getUsers() {
+//     const users = await this.prisma.user.findMany({
+//       select: { id: true, email: true },
+//     });
+
+//     return { users };
+//   }
+// }

@@ -5,9 +5,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AtStrategy, RtStrategy } from './strategies';
 import { ConfigService } from '@nestjs/config';
+import { DatabaseModule } from 'src/db/database.module';
 
 @Module({
-  imports: [JwtModule, PassportModule, PassportModule.register({}), JwtModule.register({})],
+  imports: [JwtModule, PassportModule, PassportModule.register({}), JwtModule.register({}), DatabaseModule],
   controllers: [AuthController],
   providers: [AuthService, AtStrategy, RtStrategy, ConfigService],
 })
