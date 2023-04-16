@@ -36,6 +36,7 @@
     "cuid": "^2.1.8",
     "google-auth-library": "^8.7.0",
     "helmet": "^6.0.1",
+    "ioredis": "^5.3.2",
     "moment": "^2.29.3",
     "mysql2": "2.3.3",
     "nest-winston": "^1.6.2",

@@ -14,6 +14,7 @@ import { PassportModule } from '@nestjs/passport';
 import { GoogleStrategy } from './google.strategy';
 import { AuthService } from './auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
+import { LoggerInterceptor } from './interceptor/LoggerInterceptor';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -32,6 +33,6 @@ import { JwtService } from '@nestjs/jwt';
     // }),
   ],
   controllers: [AppController],
-  providers: [Logger, TransactionInterceptor, GoogleStrategy, AuthService, JwtService],
+  providers: [Logger, TransactionInterceptor, GoogleStrategy, AuthService, JwtService, LoggerInterceptor],
 })
 export class AppModule {}
