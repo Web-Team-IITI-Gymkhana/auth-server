@@ -14,6 +14,7 @@ import {
   Res,
   Req,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { GetCurrentUserId, GetCurrentUser } from '../common/decorators';
 import { AtGuard, RtGuard } from '../common/guards';
@@ -23,6 +24,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { Console, log } from 'console';
 import { Request, query } from 'express';
 import axios from 'axios';
+
+import { LoggerInterceptor } from 'src/interceptor/LoggerInterceptor';
+
+@UseInterceptors(new LoggerInterceptor())
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}

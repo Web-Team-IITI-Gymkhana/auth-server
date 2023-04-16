@@ -13,8 +13,6 @@ import { OAuth2Client } from 'google-auth-library';
 import { UserModel } from 'src/db/models';
 import { USER_DAO } from 'src/constants';
 import { randomUUID } from 'crypto';
-import { NotNull } from 'sequelize-typescript';
-import { log } from 'console';
 
 @Injectable()
 export class AuthService {
@@ -110,14 +108,16 @@ export class AuthService {
       .update(data, {
         where: {
           UserId: userId,
-          // hashedRT: NotNull,
         },
       })
       .then((result) => {
         console.log(result);
+        return true;
       })
       .catch((err) => {
+        console.log('user dosent exist');
         console.error(err);
+        return false;
       });
     return true;
   }
