@@ -1,5 +1,5 @@
 // google.strategy.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, Res } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
 import { AuthService } from './auth/auth.service';
@@ -17,11 +17,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  async validate(accessToken: string, refreshToken: string, code: string) {
-    console.log(code);
+  async validate(state: string, refreshToken: string, code: string) {
     const user = await this.authService.validateGoogleOAuthLogin(code);
-    console.log(accessToken);
-    console.log(refreshToken);
+
     return user;
   }
 }
