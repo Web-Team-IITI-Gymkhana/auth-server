@@ -24,6 +24,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { log } from 'console';
 import { query } from 'express';
 import { LoggerInterceptor } from 'src/interceptor/LoggerInterceptor';
+import { TransactionInterceptor } from 'src/interceptor/TransactionInterceptor';
 
 @UseInterceptors(new LoggerInterceptor())
 @Controller('auth')
@@ -32,18 +33,21 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(TransactionInterceptor)
   signup(@Body() dto: AuthDto): Promise<Tokens> {
     return this.authService.signup(dto);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(TransactionInterceptor)
   signin(@Body() dto: AuthDto): Promise<Tokens> {
     return this.authService.signin(dto);
   }
   @UseGuards(AtGuard)
   @Get('logout')
   @HttpCode(HttpStatus.OK)
+  @UseInterceptors(TransactionInterceptor)
   signout(@GetCurrentUserId() userId: typeof randomUUID): Promise<boolean> {
     return this.authService.signout(userId);
   }

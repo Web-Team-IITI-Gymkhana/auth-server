@@ -22,6 +22,7 @@ export class TransactionInterceptor implements NestInterceptor {
     req.transaction = transaction;
     return next.handle().pipe(
       tap(async () => {
+        console.log('transaction interceptor active');
         await transaction.commit();
       }),
       catchError(async (err) => {
