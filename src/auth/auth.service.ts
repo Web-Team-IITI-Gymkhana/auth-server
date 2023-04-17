@@ -229,18 +229,65 @@ export class AuthService {
     return authorizeUrl;
   }
 
-  async validateGoogleOAuthLogin(code: string): Promise<any> {
+  async validateGoogleOAuthLogin(code: any): Promise<Tokens> {
     // const clientId = '603233410519-7l5m743sbl56ntteagmsortt1f32i2q7.apps.googleusercontent.com';
     // const clientSecret = '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';
     // const redirectUri = `http://localhost:3000/v1/auth/login/google/callback`;
     // const client = new OAuth2Client(clientId, clientSecret, redirectUri);
-    console.log(code);
+    // console.log(code._json);
+    const email = code._json.email;
+    let user: any;
+    let isiitimember: boolean;
+    isiitimember = false;
+    if (code._json.hd == 'iiti.ac.in') {
+      isiitimember = true;
+    }
+    const userExists = await this.userModel.findOne({
+      where: { email },
+    });
+
+    if (userExists) {
+      user = await this.userModel.findOne({
+        where: {
+          email,
+        },
+      });
+    } else {
+      await this.userModel
+        .create({
+          email,
+          authType: 'GOOGLE',
+          isVerified: isiitimember,
+        })
+        .catch((error) => {
+          if (error.name === 'SequelizeUniqueConstraintError') {
+            throw new ForbiddenException('Credentials incorrect');
+          }
+          throw error;
+        });
+
+      user = await this.userModel.findOne({
+        where: {
+          email,
+        },
+      });
+    }
+
+    const tokens = await this.getTokens(user.UserId, user.email);
+    await this.updateRtHash(user.UserId, tokens.refresh_token);
+
+    // console.log(tokens);
+
+    return tokens;
+
+
+
     // const { tokens } = await client.getToken(code);
     // // console.log(tokens);
     // client.setCredentials(tokens);
 
     // const { data } = await client.request({ url: 'https://www.googleapis.com/oauth2/v3/userinfo' });
     // console.log('hello' + data);
-    return code;
+    // return code;
   }
 }

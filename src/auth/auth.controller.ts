@@ -21,8 +21,10 @@ import { AtGuard, RtGuard } from '../common/guards';
 import { AuthService } from './auth.service';
 import { Tokens } from './types';
 import { AuthGuard } from '@nestjs/passport';
-import { log } from 'console';
-import { query } from 'express';
+import { Console, log } from 'console';
+import { Request, query } from 'express';
+import axios from 'axios';
+
 import { LoggerInterceptor } from 'src/interceptor/LoggerInterceptor';
 import { TransactionInterceptor } from 'src/interceptor/TransactionInterceptor';
 
@@ -82,7 +84,7 @@ export class AuthController {
     console.log('hello');
 
     const curl = req.body.curl;
-    const redirectUrl = await this.authService.getGoogleOAuthUrl(curl);
+    const redirectUrl = await this.authService.getGoogleOAuthUrl(req.headers.origin);
 
     return { url: redirectUrl, curl };
   }
@@ -90,9 +92,29 @@ export class AuthController {
   @Get('login/google/callback')
   @UseGuards(AuthGuard('google'))
   async loginWithGoogleCallback(@Req() req, @Res() res): Promise<void> {
-    const jwt = await this.authService.validateGoogleOAuthLogin(req.query.code);
-    // console.log(req.query);
-    res.redirect(`http://localhost:3001/success?token=${jwt}`);
+    const tokens = req.user;
+    console.log(tokens);
+    const state = req.query.state;
+    console.log(state);
+
+    // const jwt = await this.authService.validateGoogleOAuthLogin(req.query.code);
+    // console.log(jwt);
+
+    const accessToken = tokens.access_token;
+    const refreshToken = tokens.refresh_token;
+
+    const redirectUrl = `${state}?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(
+      refreshToken,
+    )}`;
+
+    res.redirect(redirectUrl);
+
+    //     res.send(`
+    //   <script>
+    //     window.parent.postMessage('${jwt}', '${req.query.state}');
+    //   </script>
+    // `);
+
     // res.send({ message: 'success' });
   }
 }

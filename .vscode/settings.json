@@ -1,0 +1,12 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "connectString": "kandula.db.elephantsql.com",
+            "name": "auth server",
+            "group": "auth"
+        }
+    ]
+}
