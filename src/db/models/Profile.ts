@@ -18,16 +18,16 @@ export class ProfileModel extends Model {
   @Column({
     type: DataType.STRING(255),
   })
-  Name: string;
+  name: string;
 
   @Column({ type: DataType.STRING }) imageUrl: Record<string, any>;
 
-  @Column({ type: DataType.JSON }) Metadata: Record<string, any>;
+  @Column({ type: DataType.JSON }) metadata: Record<string, any>;
 
   @ForeignKey(() => UserModel)
   @Column(sequelize.UUID)
-  profileId: string;
+  userId: string;
 
-  @BelongsTo(() => UserModel, 'UserId')
-  profile: UserModel;
+  @BelongsTo(() => UserModel, 'id')
+  user: UserModel;
 }

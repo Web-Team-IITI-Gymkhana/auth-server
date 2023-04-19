@@ -1,7 +1,5 @@
 import { Sequelize } from 'sequelize-typescript';
-import { Logger } from '@nestjs/common';
 
-import { isProductionEnv } from '../utils/utils';
 import { ProfileModel, UserModel } from './models';
 import { USER_DAO } from 'src/constants';
 
@@ -9,12 +7,6 @@ export const databaseProviders = [
   {
     provide: 'SEQUELIZE',
     useFactory: async () => {
-      // const dbName = 'new_auth';
-      // const dbUser = 'new_auth_user';
-      // //<dialect>://<username>:<password>@<host>/<db_name>
-      // const dbHost = 'dpg-cgrh93vdvk4n7bsbuea0-a.singapore-postgres.render.com';
-      // const dbDriver = 'postgres';
-      // const dbPassword = 'sqGE1invWBOJuuJVJDQDIsyVRxEqvM5F';
       const dbName = process.env.DB_NAME as string;
       const dbUser = process.env.DB_USERNAME as string;
       const dbHost = process.env.DB_HOST as string;
@@ -22,7 +14,7 @@ export const databaseProviders = [
       const dbPassword = process.env.DB_PASSWORD as string;
       const dbPort = Number(process.env.DB_PORT);
       console.log('host', dbHost);
-      //const cloudDbUrl = process.env.DATABASE_URL;
+
       const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
         host: dbHost,
         dialect: dbDriver,
@@ -35,7 +27,8 @@ export const databaseProviders = [
         },
       });
       sequelize.addModels([UserModel, ProfileModel]);
-      //await sequelize.sync({ force: true });
+      // await sequelize.sync({ force: true });
+
       return sequelize;
     },
   },

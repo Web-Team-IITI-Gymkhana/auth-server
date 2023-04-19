@@ -12,7 +12,7 @@ export class UserModel extends Model {
     type: sequelize.UUID,
     defaultValue: sequelize.UUIDV4,
   })
-  UserId: typeof randomUUID;
+  id: typeof randomUUID;
 
   @Unique
   @Column
