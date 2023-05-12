@@ -1,5 +1,5 @@
 # Common build stage
-FROM --platform=linux/amd64 node:14
+FROM --platform=linux/amd64 node:16
 
 WORKDIR /app
 
