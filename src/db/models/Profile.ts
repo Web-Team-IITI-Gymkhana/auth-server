@@ -20,9 +20,11 @@ export class ProfileModel extends Model {
   })
   name: string;
 
-  @Column({ type: DataType.STRING }) imageUrl: Record<string, any>;
+  @Column({ type: DataType.STRING })
+  imageUrl: Record<string, any>;
 
-  @Column({ type: DataType.JSON }) metadata: Record<string, any>;
+  @Column({ type: DataType.JSON })
+  metadata: Record<string, any>;
 
   @ForeignKey(() => UserModel)
   @Column(sequelize.UUID)
