@@ -27,7 +27,7 @@ export const databaseProviders = [
         },
       });
       sequelize.addModels([UserModel, ProfileModel]);
-      // await sequelize.sync({ force: true });
+      //await sequelize.sync({ force: true });
 
       return sequelize;
     },

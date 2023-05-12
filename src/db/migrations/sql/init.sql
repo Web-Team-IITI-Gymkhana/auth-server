@@ -1,4 +1,4 @@
-CREATE TABLE "public"."user"
+CREATE TABLE IF NOT EXISTS "public"."user"
 (
   "id" uuid NOT NULL,
   "email" varchar(255),
@@ -12,7 +12,7 @@ CREATE TABLE "public"."user"
 );
 
 
-CREATE TABLE "public"."profile"
+CREATE TABLE IF NOT EXISTS "public"."profile"
 (
     "id" uuid NOT NULL,
     "name" varchar(255),

@@ -13,6 +13,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { UserModel } from 'src/db/models';
 import { USER_DAO } from 'src/constants';
 import { randomUUID } from 'crypto';
+import { log } from 'winston';
 
 @Injectable()
 export class AuthService {
