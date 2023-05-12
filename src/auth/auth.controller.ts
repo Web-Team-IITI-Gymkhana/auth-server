@@ -1,6 +1,5 @@
 import { AuthDto } from './dto/auth.dto';
 import { randomUUID } from 'crypto';
-import { USER_SERVICE } from 'src/constants';
 import {
   Body,
   Controller,
@@ -13,7 +12,6 @@ import {
   UnauthorizedException,
   Res,
   Req,
-  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { GetCurrentUserId, GetCurrentUser } from '../common/decorators';
@@ -21,9 +19,6 @@ import { AtGuard, RtGuard } from '../common/guards';
 import { AuthService } from './auth.service';
 import { Tokens } from './types';
 import { AuthGuard } from '@nestjs/passport';
-import { Console, log } from 'console';
-import { Request, query } from 'express';
-import axios from 'axios';
 
 import { LoggerInterceptor } from 'src/interceptor/LoggerInterceptor';
 import { TransactionInterceptor } from 'src/interceptor/TransactionInterceptor';
@@ -73,7 +68,7 @@ export class AuthController {
       }
       // Perform additional checks on the payload
       // ...
-      return 'You have access to the protected resource';
+      return { status: 200, message: 'Access granted' };
     } catch (err) {
       throw new UnauthorizedException('Invalid access token');
     }
@@ -97,9 +92,6 @@ export class AuthController {
     const state = req.query.state;
     console.log(state);
 
-    // const jwt = await this.authService.validateGoogleOAuthLogin(req.query.code);
-    // console.log(jwt);
-
     const accessToken = tokens.access_token;
     const refreshToken = tokens.refresh_token;
 
@@ -108,13 +100,5 @@ export class AuthController {
     )}`;
 
     res.redirect(redirectUrl);
-
-    //     res.send(`
-    //   <script>
-    //     window.parent.postMessage('${jwt}', '${req.query.state}');
-    //   </script>
-    // `);
-
-    // res.send({ message: 'success' });
   }
 }

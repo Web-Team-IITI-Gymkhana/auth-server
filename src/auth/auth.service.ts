@@ -26,14 +26,14 @@ export class AuthService {
     private jwtService: JwtService,
   ) {
     this.googleOAuth2Client = new OAuth2Client({
-      clientId: '603233410519-7l5m743sbl56ntteagmsortt1f32i2q7.apps.googleusercontent.com',
-      clientSecret: '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',
-      redirectUri: `http://localhost:3000/v1/auth/login/google/callback`,
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      redirectUri: process.env.REDIRECT_URI,
     });
   }
 
   async signup(dto: AuthDto): Promise<Tokens> {
-    const { email, password, authType } = dto;
+    const { email, password } = dto;
 
     const userExists = await this.userModel.findOne({
       where: { email },
@@ -64,8 +64,8 @@ export class AuthService {
       },
     });
 
-    const tokens = await this.getTokens(user.UserId, user.email);
-    await this.updateRtHash(user.UserId, tokens.refresh_token);
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRtHash(user.id, tokens.refresh_token);
 
     return tokens;
 
@@ -94,20 +94,20 @@ export class AuthService {
       throw new BadRequestException('Wrong credentials');
     }
 
-    const tokens = await this.getTokens(foundUser.UserId, foundUser.email);
-    await this.updateRtHash(foundUser.UserId, tokens.refresh_token);
+    const tokens = await this.getTokens(foundUser.id, foundUser.email);
+    await this.updateRtHash(foundUser.id, tokens.refresh_token);
 
     return tokens;
   }
 
-  async signout(userId: typeof randomUUID): Promise<boolean> {
+  async signout(id: typeof randomUUID): Promise<boolean> {
     const data = {
       hashedRT: null,
     };
     await this.userModel
       .update(data, {
         where: {
-          UserId: userId,
+          id: id,
         },
       })
       .then((result) => {
@@ -139,10 +139,10 @@ export class AuthService {
     });
   }
 
-  async refreshTokens(userId: typeof randomUUID, rt: string): Promise<Tokens> {
+  async refreshTokens(id: typeof randomUUID, rt: string): Promise<Tokens> {
     const user = await this.userModel.findOne({
       where: {
-        UserId: userId,
+        id: id,
       },
     });
     if (!user || !user.hashedRT) {
@@ -154,13 +154,13 @@ export class AuthService {
       throw new ForbiddenException('Access Denied');
     }
 
-    const tokens = await this.getTokens(user.UserId, user.email);
-    await this.updateRtHash(user.UserId, tokens.refresh_token);
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRtHash(user.id, tokens.refresh_token);
 
     return tokens;
   }
 
-  async updateRtHash(userId: typeof randomUUID, rt: string): Promise<void> {
+  async updateRtHash(id: typeof randomUUID, rt: string): Promise<void> {
     const hash = await this.hashPassword(rt);
     await this.userModel.update(
       {
@@ -168,15 +168,15 @@ export class AuthService {
       },
       {
         where: {
-          UserId: userId,
+          id: id,
         },
       },
     );
   }
 
-  async getTokens(userId: typeof randomUUID, email: string): Promise<Tokens> {
+  async getTokens(id: typeof randomUUID, email: string): Promise<Tokens> {
     const jwtPayload: JwtPayload = {
-      sub: userId,
+      sub: id,
       email: email,
     };
 
@@ -207,9 +207,9 @@ export class AuthService {
     return await bcrypt.compare(args.password, args.hash);
   }
 
-  async signToken(args: { userId: typeof randomUUID; email: string }) {
+  async signToken(args: { id: typeof randomUUID; email: string }) {
     const payload = {
-      UserId: args.userId,
+      id: args.id,
       email: args.email,
     };
 
@@ -230,11 +230,6 @@ export class AuthService {
   }
 
   async validateGoogleOAuthLogin(code: any): Promise<Tokens> {
-    // const clientId = '603233410519-7l5m743sbl56ntteagmsortt1f32i2q7.apps.googleusercontent.com';
-    // const clientSecret = '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';
-    // const redirectUri = `http://localhost:3000/v1/auth/login/google/callback`;
-    // const client = new OAuth2Client(clientId, clientSecret, redirectUri);
-    // console.log(code._json);
     const email = code._json.email;
     let user: any;
     let isiitimember: boolean;
@@ -273,19 +268,9 @@ export class AuthService {
       });
     }
 
-    const tokens = await this.getTokens(user.UserId, user.email);
-    await this.updateRtHash(user.UserId, tokens.refresh_token);
-
-    // console.log(tokens);
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRtHash(user.id, tokens.refresh_token);
 
     return tokens;
-
-    // const { tokens } = await client.getToken(code);
-    // // console.log(tokens);
-    // client.setCredentials(tokens);
-
-    // const { data } = await client.request({ url: 'https://www.googleapis.com/oauth2/v3/userinfo' });
-    // console.log('hello' + data);
-    // return code;
   }
 }
