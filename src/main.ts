@@ -29,7 +29,6 @@ async function bootstrap(): Promise<void> {
       transform: true,
     }),
   );
-
   await app.listen(process.env.PORT);
   console.log(`Application is running on: ${await app.getUrl()}`);
 }

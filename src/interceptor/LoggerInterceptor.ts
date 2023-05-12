@@ -9,7 +9,7 @@ export class LoggerInterceptor implements NestInterceptor {
 
   public intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req: Request = context.switchToHttp().getRequest();
-    const userName = req['user'] ? req['user'].userName : 'anonymous';
+    const userName = req.body.email ? req.body.email : 'anonymous';
     const { statusCode } = context.switchToHttp().getResponse();
     const { method, url, ip } = req;
     const startTime = new Date().getTime();
@@ -19,6 +19,8 @@ export class LoggerInterceptor implements NestInterceptor {
         this.logger.log(
           `[ip=${ip}][user=${userName}] - "${method} ${url}" ${statusCode} ${this.getTimeDelta(startTime)}ms `,
         );
+        console.log('interceptor active');
+
         return data;
       }),
       catchError((err) => {
