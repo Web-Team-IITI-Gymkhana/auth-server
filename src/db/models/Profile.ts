@@ -14,7 +14,6 @@ export class ProfileModel extends Model {
     defaultValue: sequelize.UUIDV4,
   })
   id: typeof randomUUID;
-
   @Column({
     type: DataType.STRING(255),
   })
