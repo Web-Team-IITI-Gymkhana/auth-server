@@ -35,4 +35,5 @@ dev.fish
 !.vscode/extensions.json
 
 .env
-.package-lock.json
+package-lock.json
+yarn.lock
