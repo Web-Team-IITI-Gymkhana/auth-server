@@ -68,7 +68,7 @@ export class AuthController {
       }
       // Perform additional checks on the payload
       // ...
-      return { status: 200, message: 'Access granted' };
+      return { status: 200, email: payload.email };
     } catch (err) {
       throw new UnauthorizedException('Invalid access token');
     }
