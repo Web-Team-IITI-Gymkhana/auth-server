@@ -79,7 +79,7 @@ export class AuthController {
     console.log('hello');
 
     const curl = req.body.curl;
-    const redirectUrl = await this.authService.getGoogleOAuthUrl(req.headers.origin);
+    const redirectUrl = await this.authService.getGoogleOAuthUrl(curl);
 
     return { url: redirectUrl, curl };
   }
