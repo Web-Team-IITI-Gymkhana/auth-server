@@ -1,8 +1,8 @@
 import { INestApplication, LoggerService, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import Helmet from 'helmet';
 import { json } from 'express';
+import Helmet from 'helmet';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { isProductionEnv } from './utils/utils';
